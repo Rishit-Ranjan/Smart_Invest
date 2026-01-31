@@ -130,7 +130,8 @@ export default function SmartInvestDashboard() {
             <MetricCard
               title="Sentiment Score"
               value={results.sentimentScore}
-              description={`Based on ${maxNews} news articles`}
+              description={`Based on ${maxNews || 20} news articles`}
+              
             />
             <MetricCard
               title="Technical Score"
@@ -157,49 +158,65 @@ export default function SmartInvestDashboard() {
                 <tr style={styles.tr}>
                   <td style={styles.td}>Market Price</td>
                   <td style={{ ...styles.td, ...styles.valueHighlight }}>
-                    ₹{results.fundamentals.marketPrice.toFixed(2)}
+                    {results.fundamentals?.marketPrice != null
+                      ? `₹${Number(results.fundamentals.marketPrice).toFixed(2)}`
+                      : 'N/A'}
                   </td>
                 </tr>
                 <tr style={styles.tr}>
                   <td style={styles.td}>Total Revenue</td>
                   <td style={{ ...styles.td, ...styles.valueHighlight }}>
-                    ₹{(results.fundamentals.totalRevenue / 10000000).toLocaleString(undefined, { maximumFractionDigits: 0 })} Cr
+                    {results.fundamentals?.totalRevenue != null
+                      ? `₹${(Number(results.fundamentals.totalRevenue) / 10000000).toLocaleString(undefined, { maximumFractionDigits: 0 })} Cr`
+                      : 'N/A'}
                   </td>
                 </tr>
                 <tr style={styles.tr}>
                   <td style={styles.td}>Net Income</td>
                   <td style={{ ...styles.td, ...styles.valueHighlight }}>
-                    ₹{(results.fundamentals.netIncome / 10000000).toLocaleString(undefined, { maximumFractionDigits: 0 })} Cr
+                    {results.fundamentals?.netIncome != null
+                      ? `₹${(Number(results.fundamentals.netIncome) / 10000000).toLocaleString(undefined, { maximumFractionDigits: 0 })} Cr`
+                      : 'N/A'}
                   </td>
                 </tr>
                 <tr style={styles.tr}>
                   <td style={styles.td}>Revenue YoY Growth</td>
                   <td style={{ ...styles.td, ...styles.valueHighlight }}>
-                    +{results.fundamentals.revenueYoY}%
+                    {results.fundamentals?.revenueYoY != null
+                      ? `${Number(results.fundamentals.revenueYoY) >= 0 ? '+' : ''}${Number(results.fundamentals.revenueYoY).toFixed(2)}%`
+                      : 'N/A'}
                   </td>
                 </tr>
                 <tr style={styles.tr}>
                   <td style={styles.td}>Net Margin</td>
                   <td style={{ ...styles.td, ...styles.valueHighlight }}>
-                    {results.fundamentals.netMargin}%
+                    {results.fundamentals?.netMargin != null
+                      ? `${Number(results.fundamentals.netMargin).toFixed(2)}%`
+                      : 'N/A'}
                   </td>
                 </tr>
                 <tr style={styles.tr}>
                   <td style={styles.td}>Trailing EPS</td>
                   <td style={{ ...styles.td, ...styles.valueHighlight }}>
-                    ₹{results.fundamentals.trailingEPS}
+                    {results.fundamentals?.trailingEPS != null
+                      ? `₹${Number(results.fundamentals.trailingEPS).toFixed(2)}`
+                      : 'N/A'}
                   </td>
                 </tr>
                 <tr style={styles.tr}>
                   <td style={styles.td}>Trailing P/E</td>
                   <td style={{ ...styles.td, ...styles.valueHighlight }}>
-                    {results.fundamentals.trailingPE}
+                    {results.fundamentals?.trailingPE != null
+                      ? Number(results.fundamentals.trailingPE).toFixed(2)
+                      : 'N/A'}
                   </td>
                 </tr>
                 <tr style={styles.tr}>
                   <td style={styles.td}>Shares Outstanding</td>
                   <td style={{ ...styles.td, ...styles.valueHighlight }}>
-                    {results.fundamentals.sharesOutstanding.toLocaleString()}
+                    {results.fundamentals?.sharesOutstanding != null
+                      ? Number(results.fundamentals.sharesOutstanding).toLocaleString()
+                      : 'N/A'}
                   </td>
                 </tr>
               </tbody>

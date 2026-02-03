@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 import requests
 from bs4 import BeautifulSoup
+import re
 from nltk.sentiment.vader import SentimentIntensityAnalyzer
 import nltk
 from yahooquery import Ticker
@@ -134,8 +135,11 @@ def fetch_news_for_ticker(ticker: str, company_name: str = None, max_articles: i
         }
         try:
             r = requests.get(url, params=params, timeout=15)
+            print(f"DEBUG: NewsAPI request to {r.url} returned status {r.status_code} for {ticker}")
             data = r.json()
-            for art in data.get('articles', []):
+            arts = data.get('articles', [])
+            print(f"DEBUG: NewsAPI returned {len(arts)} articles for {ticker}")
+            for art in arts:
                 articles.append({
                     'ticker': ticker,
                     'title': art.get('title'),
@@ -150,8 +154,10 @@ def fetch_news_for_ticker(ticker: str, company_name: str = None, max_articles: i
         rss_url = f"https://news.google.com/rss/search?q={query}+when:7d&hl=en-IN&gl=IN&ceid=IN:en"
         try:
             r = requests.get(rss_url, timeout=10)
+            print(f"DEBUG: Google RSS request to {rss_url} returned status {r.status_code} for {ticker}")
             soup = BeautifulSoup(r.content, 'html.parser') # Changed from xml as per notebook output error
             items = soup.find_all('item')[:max_articles]
+            print(f"DEBUG: Google RSS returned {len(items)} items for {ticker}")
             for it in items:
                 articles.append({
                     'ticker': ticker,
@@ -321,18 +327,87 @@ def run_investment_analysis(params: Dict):
         # News/Sentiment
         news_df = fetch_news_for_ticker(ticker, max_articles=max_news)
         news_df = preprocess_and_score_news(news_df)
-        
+
+        print(f"DEBUG: Processed news articles count: {len(news_df)} for {ticker}")
         sscore_raw = 0.0
         if not news_df.empty:
             sscore_raw = news_df['compound'].mean()
-        
+            print(f"DEBUG: Mean compound score from news: {sscore_raw}")
+
         sscore_rescaled = (sscore_raw + 1) / 2
-        
+
         final_score = compute_composite_score(sscore_rescaled, tscore, fscore, weights)
-        
+
         last_price = float(prices[ticker].dropna().iloc[-1])
         prev_price = float(prices[ticker].dropna().iloc[-2]) if len(prices[ticker].dropna()) > 1 else last_price
         price_change = ((last_price - prev_price) / prev_price) * 100
+
+        # Convert news_df to serializable list of articles for frontend debugging
+        def _strip_html(x):
+            try:
+                return BeautifulSoup(str(x or ''), 'html.parser').get_text().strip()
+            except Exception:
+                return (x or '')
+
+        articles_list = []
+        for _, row in news_df.iterrows():
+            published = None
+            try:
+                if pd.notnull(row.get('publishedAt')):
+                    published = pd.to_datetime(row.get('publishedAt'))
+                    published = published.isoformat()
+            except Exception:
+                published = None
+
+            # Clean fields: strip HTML, extract first anchor href (if any) and remove anchors from text
+            title_raw = row.get('title') or row.get('headline') or ''
+            summary_raw = row.get('description') or row.get('summary') or ''
+            content_raw = row.get('content') or ''
+
+            url_candidate = None
+            try:
+                desc_soup = BeautifulSoup(str(summary_raw or ''), 'html.parser')
+                a_tag = desc_soup.find('a', href=True)
+                if a_tag and a_tag.get('href'):
+                    url_candidate = a_tag.get('href')
+                    a_tag.decompose()
+                # remove any remaining anchor tags
+                for at in desc_soup.find_all('a'):
+                    at.decompose()
+                summary = desc_soup.get_text().strip()
+            except Exception:
+                summary = _strip_html(summary_raw)
+
+            # remove raw URLs that sometimes appear in RSS descriptions
+            try:
+                summary = re.sub(r'https?://\S+', '', summary).strip()
+            except Exception:
+                pass
+
+            title = _strip_html(title_raw)
+            content = _strip_html(content_raw)
+
+            # Determine final URL (prefer explicit url field, then href found in description, then link)
+            url = (row.get('url') or url_candidate or row.get('link') or None)
+
+            source_obj = row.get('source')
+            if isinstance(source_obj, dict):
+                source_name = source_obj.get('name') or source_obj.get('id') or ''
+            else:
+                source_name = str(source_obj) if source_obj is not None else ''
+
+            articles_list.append({
+                'title': title if title else None,
+                'summary': summary if summary else None,
+                'content': content if content else None,
+                'publishedAt': published,
+                'source': source_name,
+                'url': url,
+                'neg': float(row.get('neg', 0)) if row.get('neg', None) is not None else 0.0,
+                'neu': float(row.get('neu', 0)) if row.get('neu', None) is not None else 0.0,
+                'pos': float(row.get('pos', 0)) if row.get('pos', None) is not None else 0.0,
+                'compound': float(row.get('compound', 0)) if row.get('compound', None) is not None else 0.0
+            })
 
         result = {
             "ticker": ticker,
@@ -342,6 +417,9 @@ def run_investment_analysis(params: Dict):
             "technicalScore": tscore,
             "fundamentalScore": fscore,
             "finalScore": final_score,
+            "sentimentArticles": articles_list,
+            # Suggest a threshold based on recent volatility (0.0 - 1.0)
+            "suggestedThreshold": float(round(calculate_smart_threshold(tech_df), 2)),
             "fundamentals": {
                 "marketPrice": fund_info.get('marketPrice', last_price),
                 "totalRevenue": fund_info.get('revenue', 0),

@@ -3,6 +3,7 @@ from flask_cors import CORS
 from smart_invest_logic import run_investment_analysis
 import requests
 from bs4 import BeautifulSoup
+from datetime import datetime
 
 app = Flask(__name__)
 

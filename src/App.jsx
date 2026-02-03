@@ -40,8 +40,8 @@ function MarketTicker() {
 
   useEffect(() => {
     fetchMarketData();
-    // Refresh every 60 seconds
-    const interval = setInterval(fetchMarketData, 60000);
+    // Refresh every 15 minutes (900000 ms)
+    const interval = setInterval(fetchMarketData, 900000);
     return () => clearInterval(interval);
   }, []);
 

@@ -98,9 +98,31 @@ def get_news():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+
+# In-memory cache for market data
+MARKET_CACHE = {
+    'data': [],
+    'last_updated': None
+}
+CACHE_DURATION = 900  # 15 minutes
+
 @app.route('/market', methods=['GET'])
 def get_market_data():
-    """Get live market data for major indices"""
+    """Get live market data for indices (Cached)"""
+    global MARKET_CACHE
+    
+    # Check cache first
+    now = datetime.now()
+    if MARKET_CACHE['data'] and MARKET_CACHE['last_updated']:
+        elapsed = (now - MARKET_CACHE['last_updated']).total_seconds()
+        if elapsed < CACHE_DURATION:
+            print(f"DEBUG: Returning cached market data ({int(elapsed)}s old)")
+            return jsonify({
+                'success': True,
+                'data': MARKET_CACHE['data'],
+                'timestamp': str(now)
+            })
+
     try:
         import yfinance as yf
         
@@ -138,7 +160,8 @@ def get_market_data():
                     'changePercent': round(change_pct, 2),
                     'region': 'IN'
                 })
-            except:
+            except Exception as e:
+                print(f"Error fetching {symbol}: {e}")
                 continue
         
         # Fetch US indices
@@ -159,20 +182,33 @@ def get_market_data():
                     'changePercent': round(change_pct, 2),
                     'region': 'US'
                 })
-            except:
+            except Exception as e:
+                print(f"Error fetching {symbol}: {e}")
                 continue
         
+        # Update Cache
+        if market_data:
+            MARKET_CACHE['data'] = market_data
+            MARKET_CACHE['last_updated'] = now
+            
         return jsonify({
             'success': True,
             'data': market_data,
-            'timestamp': str(import_datetime())
+            'timestamp': str(now)
         })
     except Exception as e:
+        print(f"Error fetching market data: {e}")
+        # Fallback: Return stale cache if available, even if expired
+        if MARKET_CACHE['data']:
+            print("DEBUG: Returning STALE market data due to fetch error")
+            return jsonify({
+                'success': True,
+                'data': MARKET_CACHE['data'],
+                'timestamp': str(MARKET_CACHE['last_updated']),
+                'warning': "Data is stale due to connection error"
+            })
+            
         return jsonify({'error': str(e)}), 500
-
-def import_datetime():
-    from datetime import datetime
-    return datetime.now()
 
 @app.route('/analyze', methods=['POST'])
 def analyze():

@@ -98,6 +98,82 @@ def get_news():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+@app.route('/market', methods=['GET'])
+def get_market_data():
+    """Get live market data for major indices"""
+    try:
+        import yfinance as yf
+        
+        # Indian market indices
+        indices = {
+            '^BSESN': 'SENSEX',
+            '^NSEI': 'NIFTY 50',
+            '^NSEBANK': 'BANK NIFTY',
+        }
+        
+        # US market indices
+        us_indices = {
+            '^DJI': 'DOW JONES',
+            '^GSPC': 'S&P 500',
+            '^IXIC': 'NASDAQ',
+        }
+        
+        market_data = []
+        
+        # Fetch Indian indices
+        for symbol, name in indices.items():
+            try:
+                ticker = yf.Ticker(symbol)
+                info = ticker.fast_info
+                current = info.get('lastPrice', info.get('regularMarketPrice', 0))
+                prev_close = info.get('previousClose', info.get('regularMarketPreviousClose', 0))
+                change = current - prev_close if prev_close else 0
+                change_pct = (change / prev_close * 100) if prev_close else 0
+                
+                market_data.append({
+                    'symbol': symbol,
+                    'name': name,
+                    'price': round(current, 2),
+                    'change': round(change, 2),
+                    'changePercent': round(change_pct, 2),
+                    'region': 'IN'
+                })
+            except:
+                continue
+        
+        # Fetch US indices
+        for symbol, name in us_indices.items():
+            try:
+                ticker = yf.Ticker(symbol)
+                info = ticker.fast_info
+                current = info.get('lastPrice', info.get('regularMarketPrice', 0))
+                prev_close = info.get('previousClose', info.get('regularMarketPreviousClose', 0))
+                change = current - prev_close if prev_close else 0
+                change_pct = (change / prev_close * 100) if prev_close else 0
+                
+                market_data.append({
+                    'symbol': symbol,
+                    'name': name,
+                    'price': round(current, 2),
+                    'change': round(change, 2),
+                    'changePercent': round(change_pct, 2),
+                    'region': 'US'
+                })
+            except:
+                continue
+        
+        return jsonify({
+            'success': True,
+            'data': market_data,
+            'timestamp': str(import_datetime())
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+def import_datetime():
+    from datetime import datetime
+    return datetime.now()
+
 @app.route('/analyze', methods=['POST'])
 def analyze():
     # Get the JSON data sent from the React frontend

@@ -105,7 +105,83 @@ body {
 
 .main {
   flex: 1;
-  padding-top: 64px;
+  padding-top: 100px;
+  /* 36px ticker + 64px navbar */
+}
+
+/* ============================================
+   MARKET TICKER
+   ============================================ */
+.market-ticker {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 36px;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-color);
+  z-index: 101;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+}
+
+.ticker-track {
+  display: flex;
+  gap: 48px;
+  animation: ticker-scroll 30s linear infinite;
+  white-space: nowrap;
+}
+
+@keyframes ticker-scroll {
+  0% {
+    transform: translateX(0);
+  }
+
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.ticker-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+}
+
+.ticker-name {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.ticker-price {
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+.ticker-change {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.ticker-change.positive {
+  color: var(--success);
+  background: var(--success-bg);
+}
+
+.ticker-change.negative {
+  color: var(--danger);
+  background: var(--danger-bg);
+}
+
+/* Pause animation on hover */
+.market-ticker:hover .ticker-track {
+  animation-play-state: paused;
 }
 
 /* ============================================
@@ -113,7 +189,8 @@ body {
    ============================================ */
 .navbar {
   position: fixed;
-  top: 0;
+  top: 36px;
+  /* Below the ticker */
   left: 0;
   right: 0;
   height: 64px;

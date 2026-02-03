@@ -277,7 +277,6 @@ function HomePage({ onAnalyze, loading }) {
       <div className="home-content">
         <div className="hero">
           <h1 className="hero-title">Smart Invest</h1>
-          <p className="hero-subtitle">AI-Powered Stock Analysis</p>
           <p className="hero-description">
             Get comprehensive insights with sentiment analysis, technical indicators, and fundamental data.
           </p>
@@ -483,10 +482,10 @@ export default function SmartInvestDashboard() {
   const [currentTicker, setCurrentTicker] = useState('');
   const [currentThreshold, setCurrentThreshold] = useState(0.60);
 
-  // Theme state
+  // Theme state - default to light mode
   const [isDarkMode, setIsDarkMode] = useState(() => {
     const saved = localStorage.getItem('theme');
-    return saved ? saved === 'dark' : true;
+    return saved ? saved === 'dark' : false; // Default: light mode
   });
 
   useEffect(() => {

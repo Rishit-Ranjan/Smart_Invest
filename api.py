@@ -125,7 +125,7 @@ def get_market_data():
             })
 
     try:
-        import yfinance as yf
+        from yahooquery import Ticker
         
         # Indian market indices
         indices = {
@@ -143,13 +143,23 @@ def get_market_data():
         
         market_data = []
         
+        # Combine all symbols for a single batch request
+        all_symbols = list(indices.keys()) + list(us_indices.keys())
+        ticker = Ticker(all_symbols)
+        quotes = ticker.price
+        
+        if not isinstance(quotes, dict):
+            quotes = {}
+        
         # Fetch Indian indices
         for symbol, name in indices.items():
             try:
-                ticker = yf.Ticker(symbol)
-                info = ticker.fast_info
-                current = info.get('lastPrice', info.get('regularMarketPrice', 0))
-                prev_close = info.get('previousClose', info.get('regularMarketPreviousClose', 0))
+                if symbol not in quotes or not isinstance(quotes[symbol], dict):
+                    continue
+                    
+                data = quotes[symbol]
+                current = data.get('regularMarketPrice', 0)
+                prev_close = data.get('regularMarketPreviousClose', 0)
                 change = current - prev_close if prev_close else 0
                 change_pct = (change / prev_close * 100) if prev_close else 0
                 
@@ -168,10 +178,12 @@ def get_market_data():
         # Fetch US indices
         for symbol, name in us_indices.items():
             try:
-                ticker = yf.Ticker(symbol)
-                info = ticker.fast_info
-                current = info.get('lastPrice', info.get('regularMarketPrice', 0))
-                prev_close = info.get('previousClose', info.get('regularMarketPreviousClose', 0))
+                if symbol not in quotes or not isinstance(quotes[symbol], dict):
+                    continue
+                    
+                data = quotes[symbol]
+                current = data.get('regularMarketPrice', 0)
+                prev_close = data.get('regularMarketPreviousClose', 0)
                 change = current - prev_close if prev_close else 0
                 change_pct = (change / prev_close * 100) if prev_close else 0
                 

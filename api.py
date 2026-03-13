@@ -4,6 +4,7 @@ from smart_invest_logic import run_investment_analysis
 import requests
 from bs4 import BeautifulSoup
 from datetime import datetime
+import pandas as pd
 
 app = Flask(__name__)
 
@@ -221,6 +222,70 @@ def get_market_data():
                 'warning': "Data is stale due to connection error"
             })
             
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/history', methods=['GET'])
+def get_price_history():
+    """Get historical price data with technical indicators for charting"""
+    ticker = request.args.get('ticker', '').upper()
+    period = request.args.get('period', '1y')
+
+    if not ticker:
+        return jsonify({'error': 'ticker parameter is required'}), 400
+
+    try:
+        from yahooquery import Ticker as YTicker
+        import numpy as np
+
+        tk = YTicker(ticker)
+        data = tk.history(period=period)
+
+        if data is None or data.empty:
+            # Try with .NS suffix for Indian stocks
+            if '.' not in ticker:
+                alt_ticker = f"{ticker}.NS"
+                tk = YTicker(alt_ticker)
+                data = tk.history(period=period)
+                if data is not None and not data.empty:
+                    ticker = alt_ticker
+
+            if data is None or data.empty:
+                return jsonify({'error': f'No data found for {ticker}'}), 404
+
+        df = data.reset_index()
+
+        # Normalize column names
+        col_map = {c: c.lower() for c in df.columns}
+        df = df.rename(columns=col_map)
+
+        if 'date' not in df.columns:
+            return jsonify({'error': 'No date column in data'}), 500
+
+        df['date'] = pd.to_datetime(df['date'], utc=True).dt.tz_localize(None)
+
+        # Compute SMAs
+        df['sma50'] = df['close'].rolling(window=50, min_periods=10).mean()
+        df['sma200'] = df['close'].rolling(window=200, min_periods=50).mean()
+
+        # Build response
+        history = []
+        for _, row in df.iterrows():
+            history.append({
+                'date': row['date'].strftime('%Y-%m-%d'),
+                'close': round(float(row['close']), 2),
+                'volume': int(row.get('volume', 0)),
+                'sma50': round(float(row['sma50']), 2) if not np.isnan(row.get('sma50', float('nan'))) else None,
+                'sma200': round(float(row['sma200']), 2) if not np.isnan(row.get('sma200', float('nan'))) else None,
+            })
+
+        return jsonify({
+            'ticker': ticker,
+            'period': period,
+            'count': len(history),
+            'history': history
+        })
+    except Exception as e:
+        print(f"Error fetching history for {ticker}: {e}")
         return jsonify({'error': str(e)}), 500
 
 @app.route('/analyze', methods=['POST'])

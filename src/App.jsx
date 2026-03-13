@@ -919,62 +919,138 @@ function HomePage({ onAnalyze, loading }) {
     }
   };
 
+  const quickPicks = ['TCS', 'RELIANCE', 'INFY', 'HDFCBANK', 'ITC'];
+
   return (
     <div className="home-page">
+      {/* Glow orbs */}
+      <div className="home-glow home-glow-1" />
+      <div className="home-glow home-glow-2" />
+
       <div className="home-content">
+        {/* Hero section */}
         <div className="hero">
-          <h1 className="hero-title">Smart Invest</h1>
+          <span className="hero-badge">AI-Powered Stock Analysis</span>
+          <h1 className="hero-title">
+            Smarter decisions,<br />
+            <span className="hero-gradient">better returns.</span>
+          </h1>
           <p className="hero-description">
-            Get comprehensive insights with sentiment analysis, technical indicators, and fundamental data.
+            Sentiment analysis, technical indicators, and fundamental data — all in one place. Analyze any NSE stock in seconds.
           </p>
         </div>
 
+        {/* Search form */}
         <form className="search-form" onSubmit={handleSubmit}>
           <div className="search-card">
-            <div className="form-group">
-              <label className="label">Stock Ticker</label>
-              <input
-                type="text"
-                className="input input-lg"
-                placeholder="e.g., TCS, RELIANCE, INFY"
-                value={ticker}
-                onChange={(e) => setTicker(e.target.value.toUpperCase())}
-                autoFocus
-              />
-              <p className="input-hint">Enter Indian stock ticker (NSE)</p>
+            <div className="search-input-row">
+              <div className="search-input-wrap">
+                <svg className="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
+                </svg>
+                <input
+                  type="text"
+                  className="input input-lg search-main-input"
+                  placeholder="Search any NSE stock..."
+                  value={ticker}
+                  onChange={(e) => setTicker(e.target.value.toUpperCase())}
+                  autoFocus
+                />
+              </div>
+              <button
+                type="submit"
+                className={`btn-primary btn-analyze ${!isValid ? 'btn-disabled' : ''}`}
+                disabled={!isValid || loading}
+              >
+                {loading ? (
+                  <>
+                    <span className="btn-spinner"></span>
+                    <span className="btn-analyze-text">Analyzing...</span>
+                  </>
+                ) : (
+                  <>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
+                    </svg>
+                    <span className="btn-analyze-text">Analyze</span>
+                  </>
+                )}
+              </button>
             </div>
 
-            <div className="form-group">
-              <label className="label">Score Threshold (Optional)</label>
-              <input
-                type="number"
-                className="input"
-                value={threshold}
-                placeholder="0.60"
-                min="0"
-                max="1"
-                step="0.05"
-                onChange={(e) => setThreshold(e.target.value === '' ? '' : parseFloat(e.target.value))}
-              />
-              <p className="input-hint">Investment confidence threshold (0-1)</p>
+            {/* Quick picks */}
+            <div className="quick-picks">
+              <span className="quick-picks-label">Popular:</span>
+              {quickPicks.map((t) => (
+                <button
+                  key={t}
+                  type="button"
+                  className="quick-pick-chip"
+                  onClick={() => { setTicker(t); }}
+                >
+                  {t}
+                </button>
+              ))}
             </div>
 
-            <button
-              type="submit"
-              className={`btn-primary btn-lg ${!isValid ? 'btn-disabled' : ''}`}
-              disabled={!isValid || loading}
-            >
-              {loading ? (
-                <>
-                  <span className="btn-spinner"></span>
-                  Analyzing...
-                </>
-              ) : (
-                'Analyze Stock'
-              )}
-            </button>
+            {/* Advanced options */}
+            <details className="advanced-toggle">
+              <summary className="advanced-summary">Advanced options</summary>
+              <div className="advanced-body">
+                <label className="label">Score Threshold</label>
+                <input
+                  type="number"
+                  className="input"
+                  value={threshold}
+                  placeholder="0.60"
+                  min="0"
+                  max="1"
+                  step="0.05"
+                  onChange={(e) => setThreshold(e.target.value === '' ? '' : parseFloat(e.target.value))}
+                />
+                <p className="input-hint">Investment confidence threshold (0-1)</p>
+              </div>
+            </details>
           </div>
         </form>
+
+        {/* Feature cards */}
+        <div className="feature-grid">
+          <div className="feature-card">
+            <div className="feature-icon-wrap feature-icon-sentiment">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z" />
+                <path d="M8 14s1.5 2 4 2 4-2 4-2" />
+                <line x1="9" y1="9" x2="9.01" y2="9" strokeWidth="2.5" />
+                <line x1="15" y1="9" x2="15.01" y2="9" strokeWidth="2.5" />
+              </svg>
+            </div>
+            <h3 className="feature-title">Sentiment</h3>
+            <p className="feature-desc">News-based NLP analysis using VADER to gauge market mood.</p>
+          </div>
+          <div className="feature-card">
+            <div className="feature-icon-wrap feature-icon-technical">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="22 7 13.5 15.5 8.5 10.5 2 17" />
+                <polyline points="16 7 22 7 22 13" />
+              </svg>
+            </div>
+            <h3 className="feature-title">Technical</h3>
+            <p className="feature-desc">SMA crossovers, RSI, MACD, and momentum indicators.</p>
+          </div>
+          <div className="feature-card">
+            <div className="feature-icon-wrap feature-icon-fundamental">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="3" width="7" height="9" rx="1" />
+                <rect x="14" y="3" width="7" height="5" rx="1" />
+                <rect x="14" y="12" width="7" height="9" rx="1" />
+                <rect x="3" y="16" width="7" height="5" rx="1" />
+              </svg>
+            </div>
+            <h3 className="feature-title">Fundamental</h3>
+            <p className="feature-desc">P/E, P/B, ROE, debt ratios, and profitability metrics.</p>
+          </div>
+        </div>
       </div>
     </div>
   );

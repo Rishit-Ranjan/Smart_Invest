@@ -14,7 +14,11 @@ export default function SmartInvestDashboard() {
   const [results, setResults] = useState(null);
   const [currentTicker, setCurrentTicker] = useState('');
   const [currentThreshold, setCurrentThreshold] = useState(0.60);
-  const [searchHistory, setSearchHistory] = useState([]);
+  const [searchHistory, setSearchHistory] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem('smartinvest_history') || '[]');
+    } catch { return []; }
+  });
 
   const [isDarkMode, setIsDarkMode] = useState(() => {
     const saved = localStorage.getItem('theme');
@@ -25,6 +29,10 @@ export default function SmartInvestDashboard() {
     document.documentElement.setAttribute('data-theme', isDarkMode ? 'dark' : 'light');
     localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
   }, [isDarkMode]);
+
+  useEffect(() => {
+    localStorage.setItem('smartinvest_history', JSON.stringify(searchHistory));
+  }, [searchHistory]);
 
   const toggleTheme = () => setIsDarkMode(!isDarkMode);
 

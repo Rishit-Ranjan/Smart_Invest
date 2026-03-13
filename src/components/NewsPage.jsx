@@ -41,80 +41,68 @@ export default function NewsPage({ onBack }) {
     }
   };
 
-  const formatDate = (dateStr) => {
+  const timeAgo = (dateStr) => {
     if (!dateStr) return '';
-    const date = new Date(dateStr);
-    return date.toLocaleDateString('en-IN', {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+    const diff = Date.now() - new Date(dateStr).getTime();
+    const mins = Math.floor(diff / 60000);
+    if (mins < 60) return `${mins}m ago`;
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24) return `${hrs}h ago`;
+    const days = Math.floor(hrs / 24);
+    return `${days}d ago`;
   };
 
   const getRelatedArticles = () => {
-    return news
-      .filter(a => a.title !== selectedArticle.title)
-      .slice(0, 3);
+    return news.filter(a => a.title !== selectedArticle.title).slice(0, 3);
   };
 
   if (selectedArticle) {
     const relatedArticles = getRelatedArticles();
-
     return (
       <div className="news-page">
-        <div className="back-bar">
-          <button className="back-btn" onClick={() => setSelectedArticle(null)}>
+        <div className="np-back-row">
+          <button className="np-back-btn" onClick={() => setSelectedArticle(null)}>
             <ArrowLeftIcon />
-            <span>Back to News</span>
+            <span>Back</span>
           </button>
         </div>
-        <div className="article-reader">
-          <article className="article-full">
-            <header className="article-header">
-              <span className="article-category">{activeTab === 'indian' ? '🇮🇳 Indian Markets' : '🌍 World Markets'}</span>
-              <h1 className="article-full-title">{selectedArticle.title}</h1>
-              <div className="article-meta-full">
-                <span className="article-source-badge">{selectedArticle.source}</span>
-                <span className="article-date">{formatDate(selectedArticle.publishedAt)}</span>
+        <div className="np-reader">
+          <div className="np-reader-main">
+            <article className="np-article-full">
+              <div className="np-article-header">
+                <span className="np-article-cat">
+                  {activeTab === 'indian' ? 'Indian Markets' : 'World Markets'}
+                </span>
+                <h1 className="np-article-title">{selectedArticle.title}</h1>
+                <div className="np-article-meta">
+                  <span className="np-source-pill">{selectedArticle.source}</span>
+                  <span className="np-article-time">{timeAgo(selectedArticle.publishedAt)}</span>
+                </div>
               </div>
-            </header>
-            <div className="article-body">
-              <div className="article-content">
-                <p className="article-description">
-                  {selectedArticle.description || 'This article covers the latest market developments. Click below to read the full story on the source website.'}
-                </p>
-              </div>
-              <div className="article-cta">
-                <p className="cta-hint">Continue reading on {selectedArticle.source}</p>
+              <div className="np-article-body">
+                <p>{selectedArticle.description || 'This article covers the latest market developments.'}</p>
                 <a
                   href={selectedArticle.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="read-full-btn"
+                  className="np-read-full"
                 >
-                  Read Full Article <ExternalLinkIcon />
+                  Read on {selectedArticle.source} <ExternalLinkIcon />
                 </a>
               </div>
-            </div>
-          </article>
+            </article>
+          </div>
 
           {relatedArticles.length > 0 && (
-            <div className="related-section">
-              <h3 className="related-title">More News</h3>
-              <div className="related-list">
-                {relatedArticles.map((article, idx) => (
-                  <div
-                    key={idx}
-                    className="related-card"
-                    onClick={() => setSelectedArticle(article)}
-                  >
-                    <span className="related-source">{article.source}</span>
-                    <h4 className="related-headline">{article.title}</h4>
-                  </div>
-                ))}
-              </div>
+            <div className="np-related">
+              <h3 className="np-related-title">More Stories</h3>
+              {relatedArticles.map((article, idx) => (
+                <div key={idx} className="np-related-item" onClick={() => setSelectedArticle(article)}>
+                  <span className="np-related-source">{article.source}</span>
+                  <h4 className="np-related-headline">{article.title}</h4>
+                  <span className="np-related-time">{timeAgo(article.publishedAt)}</span>
+                </div>
+              ))}
             </div>
           )}
         </div>
@@ -122,63 +110,82 @@ export default function NewsPage({ onBack }) {
     );
   }
 
+  const featured = news[0];
+  const rest = news.slice(1);
+
   return (
     <div className="news-page">
-      <div className="news-header">
-        <h1 className="news-title">Market News</h1>
-        <p className="news-subtitle">Stay updated with the latest stock market news</p>
-      </div>
-
-      <div className="news-tabs">
-        <button
-          className={`tab-btn ${activeTab === 'indian' ? 'active' : ''}`}
-          onClick={() => setActiveTab('indian')}
-        >
-          🇮🇳 Indian Markets
-        </button>
-        <button
-          className={`tab-btn ${activeTab === 'world' ? 'active' : ''}`}
-          onClick={() => setActiveTab('world')}
-        >
-          🌍 World Markets
-        </button>
-      </div>
-
-      <div className="news-content">
-        {loading ? (
-          <div className="news-loading">
-            <div className="loading-spinner"></div>
-            <p>Loading news...</p>
+      <div className="np-header">
+        <div className="np-header-top">
+          <div>
+            <h1 className="np-title">Market News</h1>
+            <p className="np-subtitle">Latest headlines from stock markets</p>
           </div>
-        ) : news.length === 0 ? (
-          <div className="news-empty">
-            <p>No news available. Please try again later.</p>
-            <button className="btn-secondary" onClick={() => fetchNews(activeTab)}>
-              Retry
+          <div className="np-tabs">
+            <div className={`np-tab-slider ${activeTab === 'world' ? 'np-tab-slider--right' : ''}`} />
+            <button
+              className={`np-tab ${activeTab === 'indian' ? 'np-tab--active' : ''}`}
+              onClick={() => setActiveTab('indian')}
+            >
+              Indian
+            </button>
+            <button
+              className={`np-tab ${activeTab === 'world' ? 'np-tab--active' : ''}`}
+              onClick={() => setActiveTab('world')}
+            >
+              World
             </button>
           </div>
-        ) : (
-          <div className="news-grid">
-            {news.map((article, index) => (
-              <div
-                key={index}
-                className="news-card"
-                onClick={() => setSelectedArticle(article)}
-              >
-                <div className="news-card-content">
-                  <span className="news-source">{article.source}</span>
-                  <h3 className="news-card-title">{article.title}</h3>
-                  <p className="news-card-desc">
-                    {article.description ? article.description.slice(0, 120) + '...' : 'Click to read more'}
+        </div>
+      </div>
+
+      {loading ? (
+        <div className="np-loading">
+          <div className="loading-spinner"></div>
+          <p>Fetching latest news...</p>
+        </div>
+      ) : news.length === 0 ? (
+        <div className="np-empty">
+          <p>No news available right now.</p>
+          <button className="btn-secondary" onClick={() => fetchNews(activeTab)}>Retry</button>
+        </div>
+      ) : (
+        <>
+          {/* Featured article */}
+          {featured && (
+            <div className="np-featured" onClick={() => setSelectedArticle(featured)}>
+              <div className="np-featured-badge">Latest</div>
+              <h2 className="np-featured-title">{featured.title}</h2>
+              <p className="np-featured-desc">
+                {featured.description ? featured.description.slice(0, 200) : 'Click to read more'}
+              </p>
+              <div className="np-featured-footer">
+                <span className="np-source-pill">{featured.source}</span>
+                <span className="np-time">{timeAgo(featured.publishedAt)}</span>
+              </div>
+            </div>
+          )}
+
+          {/* News grid */}
+          <div className="np-grid">
+            {rest.map((article, index) => (
+              <div key={index} className="np-card" onClick={() => setSelectedArticle(article)}>
+                <div className="np-card-body">
+                  <span className="np-card-source">{article.source}</span>
+                  <h3 className="np-card-title">{article.title}</h3>
+                  <p className="np-card-desc">
+                    {article.description ? article.description.slice(0, 100) + '...' : 'Click to read more'}
                   </p>
-                  <span className="news-date">{formatDate(article.publishedAt)}</span>
                 </div>
-                <div className="news-card-arrow">→</div>
+                <div className="np-card-footer">
+                  <span className="np-time">{timeAgo(article.publishedAt)}</span>
+                  <span className="np-card-read">Read →</span>
+                </div>
               </div>
             ))}
           </div>
-        )}
-      </div>
+        </>
+      )}
     </div>
   );
 }

@@ -25,7 +25,7 @@ export default function HomePage({ onAnalyze, loading, searchHistory = [], onLoa
       <div className="home-split-layout">
         <div className="home-left">
           <div className="hero">
-            <span className="hero-badge">AI-Powered Stock Analysis</span>
+            <span className="hero-badge">Stock Analysis</span>
             <h1 className="hero-title">
               Smarter decisions,<br />
               <span className="hero-gradient">better returns.</span>

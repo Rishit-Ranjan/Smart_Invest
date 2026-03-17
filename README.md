@@ -1,4 +1,4 @@
-<img width="1852" height="913" alt="Screenshot 2026-03-17 105513" src="https://github.com/user-attachments/assets/89bd6418-1605-4099-b9fb-c09e294fa0dd" /># Smart Invest 📈
+# Smart Invest 📈
 
 AI-Powered Stock Analysis for Indian & Global Markets
 

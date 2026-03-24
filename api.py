@@ -5,6 +5,7 @@ import requests
 from bs4 import BeautifulSoup
 from datetime import datetime
 import pandas as pd
+import numpy as np
 
 app = Flask(__name__)
 
@@ -270,9 +271,12 @@ def get_price_history():
         # Build response
         history = []
         for _, row in df.iterrows():
+            # Handle NaN for 'close'
+            close_price = round(float(row['close']), 2) if not np.isnan(row.get('close', float('nan'))) else None
+            
             history.append({
                 'date': row['date'].strftime('%Y-%m-%d'),
-                'close': round(float(row['close']), 2),
+                'close': close_price,
                 'volume': int(row.get('volume', 0)),
                 'sma50': round(float(row['sma50']), 2) if not np.isnan(row.get('sma50', float('nan'))) else None,
                 'sma200': round(float(row['sma200']), 2) if not np.isnan(row.get('sma200', float('nan'))) else None,
